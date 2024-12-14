@@ -18,7 +18,8 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "http-proxy": "^1.18.1"
+    "http-proxy": "^1.18.1",
+    "http-proxy-middleware": "^3.0.3"
   },
   "devDependencies": {
     "@types/http-proxy": "^1.17.15",
