@@ -1,99 +1,39 @@
-// const http = require('http');
-// const httpProxy = require('http-proxy');
+import fs = require('fs-extra');
+import { watch } from 'chokidar';
+import * as readLastLines from 'read-last-lines';
+import { IpOperator } from 'ip-operator';
+import { exec } from 'child_process';
 
-import * as http from 'http';
-import * as HttpProxyMiddleware from 'http-proxy-middleware';
-import { url } from 'inspector';
-import * as Express from 'express';
-import { readToMap } from './mapUtils';
+// Get the access log path as an argument (e.g., /path/to/access_log)
+// console.info(process.argv);
+const accessLogPath = process.argv[2] || process.env['NGINX_ACCESS_LOG_PATH'];
+if (!accessLogPath) {
+  console.error('Please provide the access log file path as an argument.');
+  process.exit(1);
+}
 
-let bannedUrls: Map<String, boolean>;
-let ready = false;
-
-const expressApp = Express();
-
-const proxyMiddleware = HttpProxyMiddleware.createProxyMiddleware<
-  Request,
-  Response
->({
-  target: 'https://lotus.tetakent.com',
-  changeOrigin: true,
-  on: {
-    start: async () => {
-      if (!ready) {
-        bannedUrls = await readToMap('./banned-ips.json');
-        ready = true;
-      }
-    },
-    proxyReq: (proxyReq, request, response) => {
-      console.info(bannedUrls);
-      if (ready) {
-        //@ts-ignore
-        const remoteAddr = request.socket.remoteAddress;
-
-        console.info(request.url);
-        console.info(bannedUrls.get(remoteAddr));
-        if (bannedUrls.get(remoteAddr)) {
-          console.info(remoteAddr, 'yasaklıdır');
-          //@ts-ignore
-          response.end('Yarrağımı ye!');
-        } else if (
-          request.url?.includes('bin/sh') ||
-          request.url?.includes(encodeURI('bin/sh')) ||
-          request.url?.includes('.php')
-        ) {
-          console.info('Bi tane oç tırtıklamaya çalışıyor');
-          //@ts-ignore
-          response.end('Yarrağımı ye!');
-          //@ts-ignore
-          bannedUrls.set(remoteAddr, true);
-        } else {
-        }
-      } else {
-        //@ts-ignore
-        response.end('Şu an sistem hazır değil. daha sonra tekrar deneyin');
-      }
-    },
-    proxyRes: (proxyRes, req, res) => {
-      /* handle proxyRes */
-    },
-    error: (err, req, res) => {
-      /* handle error */
-    },
-  },
+const ipOperator = new IpOperator(accessLogPath + '-ips.json');
+ipOperator.penalizementAction.subscribe((a) => {
+  let cmd = `sudo iptables -I DOCKER-USER -s ${a.ipAddress} -j ${a.penalized ? 'DROP' : 'ACCEPT'}`;
+  console.info(`${cmd} çalıştırılıyor`);
+  exec(cmd, (e, o, err2) => {
+    if (e) {
+      console.warn(`${cmd} çalıştırılamadı, ${e}`);
+    } else if (err2) {
+      console.warn(`${cmd} çalıştırıldı ama hata fırlattu, ${err2}`);
+    } else {
+      console.info(`${cmd} çalıştırıldı`);
+    }
+  });
 });
+ipOperator.init().then(() => {
+  // Create a ReadStream for the access log file and read the last N lines from it (e.g., 10 lines in this example)
 
-expressApp.use('/', proxyMiddleware);
-
-expressApp.listen(8080);
-
-// Create a new HTTP proxy instance
-// const proxy c= httpProxyMiddleware.createProxyServer();
-
-// Create the reverse proxy server
-// const server = http.createServer((req, res) => {
-//   console.info(req.socket.remoteAddress?.replace(/^.*:/, '') + " -> " + req.headers.host)
-//   if (req.url?.includes("bin/sh") || req.url?.includes(encodeURI("bin/sh")) || req.url?.includes(".php")) {
-//     res.end('Yarrağımı ye.');
-
-//   } else {
-//     console.info(req.url)
-//     // Proxy the incoming request to the target server
-//     // proxy.web(req, res, { target: 'https://lotus.tetakent.com',  changeOrigin: true });
-//     proxy.web(req, res, { target: 'http://localhost:4200',  changeOrigin: true });
-//   }
-
-// });
-
-// // Handle proxy errors
-// proxy.on('error', (err, req, res) => {
-//   console.error('Proxy error:', err);
-//   // res.writeHead(500, { 'Content-Type': 'text/plain' });
-
-//   res.end('Proxy error occurred.');
-// });
-
-// // Start the reverse proxy server
-// server.listen(8080, () => {
-//   console.log('Reverse proxy server is running on port 80');
-// });
+  // Watch for changes in the access log file and re-process it when it changes
+  watch(accessLogPath).on('change', (a) => {
+    console.info('değişiklik', a);
+    readLastLines.read(a, 1, 'utf-8').then((line) => {
+      line.split();
+    });
+  });
+});

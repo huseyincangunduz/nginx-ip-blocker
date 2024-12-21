@@ -16,12 +16,17 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "chokidar": "^4.0.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "fs-extra": "^11.2.0",
     "http-proxy": "^1.18.1",
-    "http-proxy-middleware": "^3.0.3"
+    "http-proxy-middleware": "^3.0.3",
+    "read-last-lines": "^1.8.0",
+    "stream": "^0.0.3"
   },
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
     "@types/http-proxy": "^1.17.15",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.1",
