@@ -4,7 +4,7 @@ const NginxNonRestRegex =
   /^(?<ip>[\d.]+) - - \[(?<date>[^\]]+)] "(?<request>[^"]*)" (?<status>\d{3}) (?<size>\d+) "(?<referrer>[^"]*)" "(?<userAgent>[^"]*)"/;
 
 export const parseSingleLine = (a: string) => {
-  const restTry = NginxRestRegex.exec(a)?.groups;
+  const restTry = new RegExp(NginxRestRegex).exec(a)?.groups;
   if (restTry) {
     const restInfo = {
       ...restTry,
@@ -12,6 +12,14 @@ export const parseSingleLine = (a: string) => {
     } as any as NginxRestRequestInfo;
     return restInfo;
   } else {
+    const nonrestTry2 = new RegExp(NginxNonRestRegex).exec(a)?.groups;
+    if (nonrestTry2 != null) {
+      const nonRestInfo = {
+        ...nonrestTry2,
+        isRest: false,
+      } as any as NginxRestRequestInfo;
+      return nonRestInfo;
+    }
   }
 };
 

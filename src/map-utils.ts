@@ -16,11 +16,17 @@ export const readToMap = async (jsonPath: string) => {
     !!(await FileSystemAsync.stat(path).catch((e) => false));
 
   if (await fileExists(jsonPath)) {
-    const json = await FileSystemAsync.readFile('map.json', {
-      //@ts-ignore
-      encoding: 'utf-8',
-    });
-    return new Map(JSON.parse(json));
+    try {
+      const json = await FileSystemAsync.readFile(jsonPath, {
+        //@ts-ignore
+        encoding: 'utf-8',
+      });
+      return new Map(JSON.parse(json));
+    } catch (e) {
+      console.error(e);
+      console.warn('JSON okunamadı, yeni harita yüklenecek');
+      return new Map();
+    }
   }
   return new Map();
 };

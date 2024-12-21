@@ -1,8 +1,8 @@
 import exp = require('constants');
-import { readToMap, saveToFile } from 'map-utils';
-import { ObservingIp } from 'observing-ip';
+import { readToMap, saveToFile } from './map-utils';
+import { ObservingIp } from './observing-ip';
 import { Subject } from 'rxjs';
-import setToHappen from 'set-to-happen';
+import setToHappen from './set-to-happen';
 export class IpOperator {
   private bannedUrlsMap!: Map<String, ObservingIp>;
   private _initialized = false;
@@ -35,17 +35,20 @@ export class IpOperator {
     if (this.bannedUrlsMap.has(ipAddress)) {
       urlInstance = this.bannedUrlsMap.get(ipAddress)!;
     } else {
+      console.info(`${ipAddress} kayıtlı değilmiş... Yeni eklenecek`)
+
       urlInstance = this.newInstance(ipAddress);
     }
     urlInstance.penalized = true;
     urlInstance.penaltyPoint += 1;
     this.setPenaltyExpire(urlInstance);
     this.setToHappenToHeaven(urlInstance);
-    this.notifyAndSave(urlInstance);
+
+    await this.notifyAndSave(urlInstance);
   }
 
   private setPenaltyExpire(urlInstance: ObservingIp) {
-    const penaltyDurationMs = (5 ^ urlInstance.penaltyPoint) * 1000;
+    const penaltyDurationMs = Math.min(604800000, (Math.pow(2, urlInstance.penaltyPoint)) * 5000);
     const expire = new Date(Date.now() + penaltyDurationMs);
     urlInstance.penaltyExpire = expire;
   }
@@ -59,30 +62,38 @@ export class IpOperator {
     };
   }
 
-  heaven(ipAddress: string, ignorePenaltyPointMax) {
+  async heaven(
+    ipAddress: string,
+    decreasePenaltyPoint: boolean,
+    ignorePenaltyPointMax: boolean,
+  ) {
     let urlInstance: ObservingIp;
 
     if (this.bannedUrlsMap.has(ipAddress)) {
       urlInstance = this.bannedUrlsMap.get(ipAddress)!;
       if (urlInstance.penaltyPoint > 0) {
-        urlInstance.penaltyPoint = urlInstance.penaltyPoint - 1;
+        urlInstance.penalized = false;
+        if (decreasePenaltyPoint) {
+          urlInstance.penaltyPoint = urlInstance.penaltyPoint - 1;
+        }
         this.bannedUrlsMap.set(ipAddress, urlInstance);
-        if (!ignorePenaltyPointMax || urlInstance.penaltyPoint > 100) {
+        if (!ignorePenaltyPointMax && urlInstance.penaltyPoint > 100) {
           console.info(
             ipAddress +
               ' ceza puanı yüksektir. Şimdilik düşene kadar izin verilmeyecek',
           );
-          this.saveMap();
+          await this.saveMap();
         } else {
-          this.notifyAndSave(urlInstance);
+          await this.notifyAndSave(urlInstance);
         }
       }
     }
   }
 
-  private notifyAndSave(urlInstance: ObservingIp) {
+  private async notifyAndSave(urlInstance: ObservingIp) {
     this._penalizementAction.next(urlInstance);
-    this.saveMap();
+    this.bannedUrlsMap.set(urlInstance.ipAddress, urlInstance);
+    await this.saveMap();
   }
 
   async saveMap() {
@@ -93,7 +104,7 @@ export class IpOperator {
     setToHappen(
       urlInstance.ipAddress,
       () => {
-        this.heaven(urlInstance.ipAddress, true);
+        this.heaven(urlInstance.ipAddress, false, true);
       },
       urlInstance.penaltyExpire,
     );
@@ -108,10 +119,10 @@ export class IpOperator {
       urlPath.includes('XDEBUG')
     ) {
       console.log(ipAddress + ' şüphelidir. Cezalandırılacak');
-      this.penalize(ipAddress);
+      await this.penalize(ipAddress);
     } else {
       console.log(ipAddress + ' şüpheli değildir.');
-      this.heaven(ipAddress, false);
+      await this.heaven(ipAddress, true, false);
     }
   }
 }

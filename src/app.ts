@@ -1,8 +1,17 @@
 import fs = require('fs-extra');
 import { watch } from 'chokidar';
 import * as readLastLines from 'read-last-lines';
-import { IpOperator } from 'ip-operator';
-import { exec } from 'child_process';
+import { IpOperator } from './ip-operator';
+import * as ChildProcess from 'child_process';
+import { parseSingleLine } from './nginx-access-log-regex';
+
+// const showResult = (a: Object) => {
+//   ChildProcess.exec(
+//     `kdialog --msgbox "Sonuçlar:\n${Object.entries(a)
+//       .map((a) => a.join(':'))
+//       .join(', \n')}"`,
+//   );
+// };
 
 // Get the access log path as an argument (e.g., /path/to/access_log)
 // console.info(process.argv);
@@ -14,9 +23,11 @@ if (!accessLogPath) {
 
 const ipOperator = new IpOperator(accessLogPath + '-ips.json');
 ipOperator.penalizementAction.subscribe((a) => {
-  let cmd = `sudo iptables -I DOCKER-USER -s ${a.ipAddress} -j ${a.penalized ? 'DROP' : 'ACCEPT'}`;
+  // showResult(a);
+  // return;
+  let cmd = `iptables -I DOCKER-USER -s ${a.ipAddress} -j ${a.penalized ? 'DROP' : 'ACCEPT'}`;
   console.info(`${cmd} çalıştırılıyor`);
-  exec(cmd, (e, o, err2) => {
+  ChildProcess.exec(cmd, (e, o, err2) => {
     if (e) {
       console.warn(`${cmd} çalıştırılamadı, ${e}`);
     } else if (err2) {
@@ -26,14 +37,16 @@ ipOperator.penalizementAction.subscribe((a) => {
     }
   });
 });
-ipOperator.init().then(() => {
-  // Create a ReadStream for the access log file and read the last N lines from it (e.g., 10 lines in this example)
 
+ipOperator.init().then(() => {
   // Watch for changes in the access log file and re-process it when it changes
   watch(accessLogPath).on('change', (a) => {
-    console.info('değişiklik', a);
+    console.info('Bir bağlantı geldi', a);
     readLastLines.read(a, 1, 'utf-8').then((line) => {
-      line.split();
+      const info = parseSingleLine(line);
+      if (info != null) {
+        ipOperator.reviewIncoming(info.ip, info.url);
+      }
     });
   });
 });
