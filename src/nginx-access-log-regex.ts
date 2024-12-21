@@ -3,6 +3,20 @@ const NginxRestRegex =
 const NginxNonRestRegex =
   /^(?<ip>[\d.]+) - - \[(?<date>[^\]]+)] "(?<request>[^"]*)" (?<status>\d{3}) (?<size>\d+) "(?<referrer>[^"]*)" "(?<userAgent>[^"]*)"/;
 
+export interface NginxRestRequestInfo {
+  ip: string;
+  date: string;
+  method: string;
+  request: string;
+  url: string;
+  protocol: string;
+  status: string;
+  size: string;
+  referrer: string;
+  userAgent: string;
+  isRest: boolean;
+}
+
 export const parseSingleLine = (a: string) => {
   const restTry = new RegExp(NginxRestRegex).exec(a)?.groups;
   if (restTry) {
@@ -22,17 +36,3 @@ export const parseSingleLine = (a: string) => {
     }
   }
 };
-
-export interface NginxRestRequestInfo {
-  ip: string;
-  date: string;
-  method: string;
-  request: string;
-  url: string;
-  protocol: string;
-  status: string;
-  size: string;
-  referrer: string;
-  userAgent: string;
-  isRest: boolean;
-}
