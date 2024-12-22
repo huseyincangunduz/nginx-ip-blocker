@@ -1,5 +1,5 @@
 FROM node:22-alpine
-RUN apk add iptables
+RUN apk add --no-cache iptables ip6tables
 WORKDIR /usr/app
 
 # first copy just the package and the lock file, for caching purposes

@@ -120,7 +120,6 @@ export class IpOperator {
       urlPath.includes('bin/sh') ||
       urlPath.includes(encodeURI('bin/sh')) ||
       urlPath.includes('.php') ||
-      urlPath.includes('XDEBUG') ||
       urlPath.startsWith('/login.rsp') ||
       urlPath.startsWith('/tests/vendor/phpunit') ||
       urlPath.startsWith('/test/vendor/phpunit') ||
