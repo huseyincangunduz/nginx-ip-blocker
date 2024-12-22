@@ -25,7 +25,7 @@ const ipOperator = new IpOperator(accessLogPath + '-ips.json');
 ipOperator.penalizementAction.subscribe((a) => {
   // showResult(a);
   // return;
-  let cmd = `iptables -I FORWARD -s ${a.ipAddress} -j ${a.penalized ? 'DROP' : 'ACCEPT'}`;
+  let cmd = `iptables -I DOCKER-USER -s ${a.ipAddress} -j ${a.penalized ? 'DROP' : 'ACCEPT'}`;
   console.info(`${cmd} çalıştırılıyor`);
   ChildProcess.exec(cmd, (e, o, err2) => {
     if (e) {
