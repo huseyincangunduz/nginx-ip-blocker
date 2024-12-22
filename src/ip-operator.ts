@@ -35,7 +35,7 @@ export class IpOperator {
     if (this.bannedUrlsMap.has(ipAddress)) {
       urlInstance = this.bannedUrlsMap.get(ipAddress)!;
     } else {
-      console.info(`${ipAddress} kayıtlı değilmiş... Yeni eklenecek`)
+      console.info(`${ipAddress} kayıtlı değilmiş... Yeni eklenecek`);
 
       urlInstance = this.newInstance(ipAddress);
     }
@@ -48,7 +48,10 @@ export class IpOperator {
   }
 
   private setPenaltyExpire(urlInstance: ObservingIp) {
-    const penaltyDurationMs = Math.min(604800000, (Math.pow(2, urlInstance.penaltyPoint)) * 5000);
+    const penaltyDurationMs = Math.min(
+      604800000,
+      Math.pow(2, urlInstance.penaltyPoint) * 5000,
+    );
     const expire = new Date(Date.now() + penaltyDurationMs);
     urlInstance.penaltyExpire = expire;
   }
@@ -113,10 +116,27 @@ export class IpOperator {
   async reviewIncoming(ipAddress: string, urlPath: string) {
     if (urlPath == null) urlPath = '';
     if (
+      urlPath.startsWith('/.env') ||
       urlPath.includes('bin/sh') ||
       urlPath.includes(encodeURI('bin/sh')) ||
       urlPath.includes('.php') ||
-      urlPath.includes('XDEBUG')
+      urlPath.includes('XDEBUG') ||
+      urlPath.startsWith('/login.rsp') ||
+      urlPath.startsWith('/tests/vendor/phpunit') ||
+      urlPath.startsWith('/test/vendor/phpunit') ||
+      urlPath.startsWith('/testing/vendor/phpunit') ||
+      urlPath.startsWith('/vendor/phpunit') ||
+      urlPath.startsWith('/api/vendor/phpunit') ||
+      urlPath.startsWith('/demo/vendor/phpunit') ||
+      urlPath.startsWith('/containers/json') ||
+      urlPath.startsWith('/demo') ||
+      urlPath.startsWith('/?XDEBUG_SESSION_START=') ||
+      urlPath.startsWith('/cgi-bin') ||
+      urlPath.startsWith('/actuator/gateway/routes') ||
+      urlPath.startsWith('/.git/config') ||
+      urlPath.startsWith('/dns-query') ||
+      urlPath ==
+        '\x16\x03\x01\x05\xA8\x01\x00\x05\xA4\x03\x03\xD1\xCE\x91\xBD\x9C?\xA9\x1A\x1BC2\xCB\xC8\xC6\xC7\xB7OG\x0C\x0E\xA1\xAA\x08Y\xD5\xD5t\x069\xD6=L \xC7\xAC\x87'
     ) {
       console.log(ipAddress + ' şüphelidir. Cezalandırılacak');
       await this.penalize(ipAddress);
