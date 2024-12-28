@@ -1,4 +1,4 @@
-# Ip Blocker
+# Nginx Ip Blocker
 
 ## Synopsis
 
