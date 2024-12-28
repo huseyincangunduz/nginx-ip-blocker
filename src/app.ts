@@ -26,14 +26,14 @@ ipOperator.penalizementAction.subscribe((a) => {
   // showResult(a);
   // return;
   let cmd = `iptables -I FORWARD -s ${a.ipAddress} -j ${a.penalized ? 'DROP' : 'ACCEPT'}`;
-  console.info(`${cmd} çalıştırılıyor`);
+  console.info(`${cmd} about to be runned`);
   ChildProcess.exec(cmd, (e, o, err2) => {
     if (e) {
-      console.warn(`${cmd} çalıştırılamadı, ${e}`);
+      console.warn(`${cmd} could not be runned, ${e}`);
     } else if (err2) {
-      console.warn(`${cmd} çalıştırıldı ama hata fırlattu, ${err2}`);
+      console.warn(`${cmd} is runned but there is some errors, ${err2}`);
     } else {
-      console.info(`${cmd} çalıştırıldı`);
+      console.info(`${cmd} runned`);
     }
   });
 });
@@ -41,7 +41,6 @@ ipOperator.penalizementAction.subscribe((a) => {
 ipOperator.init().then(() => {
   // Watch for changes in the access log file and re-process it when it changes
   watch(accessLogPath).on('change', (a) => {
-    console.info('Bir bağlantı geldi', a);
     readLastLines.read(a, 1, 'utf-8').then((line) => {
       const info = parseSingleLine(line);
       if (info != null) {

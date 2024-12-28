@@ -35,7 +35,9 @@ export class IpOperator {
     if (this.bannedUrlsMap.has(ipAddress)) {
       urlInstance = this.bannedUrlsMap.get(ipAddress)!;
     } else {
-      console.info(`${ipAddress} kayıtlı değilmiş... Yeni eklenecek`);
+      console.info(
+        `${ipAddress} has not been saved... New record will be added`,
+      );
 
       urlInstance = this.newInstance(ipAddress);
     }
@@ -80,15 +82,7 @@ export class IpOperator {
           urlInstance.penaltyPoint = urlInstance.penaltyPoint - 1;
         }
         this.bannedUrlsMap.set(ipAddress, urlInstance);
-        if (!ignorePenaltyPointMax && urlInstance.penaltyPoint > 100) {
-          console.info(
-            ipAddress +
-              ' ceza puanı yüksektir. Şimdilik düşene kadar izin verilmeyecek',
-          );
-          await this.saveMap();
-        } else {
-          await this.notifyAndSave(urlInstance);
-        }
+        await this.notifyAndSave(urlInstance);
       }
     }
   }
@@ -137,10 +131,10 @@ export class IpOperator {
       urlPath ==
         '\x16\x03\x01\x05\xA8\x01\x00\x05\xA4\x03\x03\xD1\xCE\x91\xBD\x9C?\xA9\x1A\x1BC2\xCB\xC8\xC6\xC7\xB7OG\x0C\x0E\xA1\xAA\x08Y\xD5\xD5t\x069\xD6=L \xC7\xAC\x87'
     ) {
-      console.log(ipAddress + ' şüphelidir. Cezalandırılacak');
+      console.log(ipAddress + ' seems suspicious, about to be penalized');
       await this.penalize(ipAddress);
     } else {
-      console.log(ipAddress + ' şüpheli değildir.');
+      console.log(ipAddress + ' is innocent.');
       await this.heaven(ipAddress, true, false);
     }
   }
