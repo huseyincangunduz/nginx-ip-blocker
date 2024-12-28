@@ -33,6 +33,8 @@ Example:
     - When the expire time come, `iptables -I FORWARD -s {SUSPICIOUS IP} DROP` will be called.
   - Penalty duration will be calculated as
     - ${{penalty point} ^ 2} * 5$ seconds
+  - Otherwise, there is not suspicious request
+    - If greater than 0, penalty point will decreased by 1.
 
 ## Usage
 
