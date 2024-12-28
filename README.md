@@ -29,8 +29,8 @@ Example:
 - If there is a suspicious request
   - Penalty point will be increased by 1.
   - Penalized user's all requests will be disabled until the penalty expires
-    - `iptables -I FORWARD -s {SUSPICIOUS IP} ACCEPT` will be called when ip penalized
-    - When the expire time come, `iptables -I FORWARD -s {SUSPICIOUS IP} DROP` will be called.
+    - `iptables -I FORWARD -s {SUSPICIOUS IP} DROP` will be called when ip penalized
+    - When the expire time come, `iptables -I FORWARD -s {SUSPICIOUS IP} ACCEPT` will be called.
   - Penalty duration will be calculated as
     - ${{penalty point} ^ 2} * 5$ seconds
   - Otherwise, there is not suspicious request
