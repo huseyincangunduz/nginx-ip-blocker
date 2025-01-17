@@ -7,6 +7,8 @@ export class IpOperator {
   private bannedUrlsMap!: Map<String, ObservingIp>;
   private _initialized = false;
   private _penalizementAction = new Subject<ObservingIp>();
+  private readonly SAVE_TRESHOLD = 60000;
+  private saveTimeoutPointer: any;
 
   constructor(public mapPath: string) {}
 
@@ -90,7 +92,13 @@ export class IpOperator {
   private async notifyAndSave(urlInstance: ObservingIp) {
     this._penalizementAction.next(urlInstance);
     this.bannedUrlsMap.set(urlInstance.ipAddress, urlInstance);
-    await this.saveMap();
+
+    if (!this.saveTimeoutPointer) {
+      this.saveTimeoutPointer = setTimeout(async () => {
+        this.saveTimeoutPointer = null;
+        await this.saveMap();
+      }, this.SAVE_TRESHOLD);
+    }
   }
 
   async saveMap() {
