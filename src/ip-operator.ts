@@ -94,7 +94,10 @@ export class IpOperator {
     this.bannedUrlsMap.set(urlInstance.ipAddress, urlInstance);
 
     if (!this.saveTimeoutPointer) {
+      console.info('Kaydetme birazdan başlayacak');
+
       this.saveTimeoutPointer = setTimeout(async () => {
+        console.info('Kaydediliyor');
         this.saveTimeoutPointer = null;
         await this.saveMap();
       }, this.SAVE_TRESHOLD);
